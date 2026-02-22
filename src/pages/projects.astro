@@ -42,7 +42,12 @@ import coreImage from "../assets/projects/core/core-resumes.png";
               <Image src={coreImage} alt="core screenshot" />
             </div>
             <div class="project-info">
-              <span class="title">core</span>
+              <div class="project-details">
+                <span class="title">core</span>
+                <p class="project-desc" data-i18n="projects.core.desc">
+                  Optimized resume builder for AI era.
+                </p>
+              </div>
               <span class="arrow">-&gt;</span>
             </div>
           </a>
@@ -132,11 +137,24 @@ import coreImage from "../assets/projects/core/core-resumes.png";
     align-items: center;
   }
 
+  .project-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+  }
+
   .project-info .title {
     font-family: var(--font-mono);
     font-size: 1.2em;
     color: var(--text-primary);
     font-weight: 700;
+  }
+
+  .project-desc {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin: 0;
   }
 
   .project-info .arrow {

@@ -26,12 +26,9 @@ const posts = (await getCollection("blog")).sort(
 
 		<main>
 			<section class="hero">
-				<h1 class="stagger-1" data-i18n="hero.david">
-					David <span class="asterisk">*</span>
-				</h1>
-				<h1 class="stagger-2 italic" data-i18n="hero.molizane">Molizane</h1>
-				<h1 class="stagger-3" data-i18n="hero.software">
-					<i>&amp;</i> Software
+				<h1 class="stagger-1" data-i18n="hero.david">David Molizane</h1>
+				<h1 class="stagger-2 italic" data-i18n="hero.software">
+					Software, Data, AI
 				</h1>
 				<p class="hero-subtext" data-i18n="hero.subtext">
 					Build cool software and study data & AI. Experimental signals and
@@ -183,11 +180,15 @@ const posts = (await getCollection("blog")).sort(
 
 	@media (max-width: 720px) {
 		.hero h1 {
-			font-size: 3rem;
+			font-size: clamp(2.5rem, 10vw, 4rem);
 		}
 		.stagger-2,
 		.stagger-3 {
 			margin-left: 0;
+		}
+		.hero-subtext {
+			margin-top: 2em;
+			padding-left: 0.8em;
 		}
 		.post-list a {
 			grid-template-columns: 1fr;

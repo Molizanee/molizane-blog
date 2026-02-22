@@ -11,8 +11,8 @@
 
 	--font-mono: 'Fira Code', 'JetBrains Mono', 'Space Mono', monospace;
 	--font-serif: 'Playfair Display', serif;
-	
-	--box-shadow: 0 2px 6px rgba(0,0,0, 0.25), 0 8px 24px rgba(0,0,0, 0.33);
+
+	--box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.33);
 }
 
 body {
@@ -33,23 +33,50 @@ main {
 	margin: auto;
 	padding: 3em 1em;
 	position: relative;
-	z-index: 1; /* Above the glows/grid */
+	z-index: 1;
+	/* Above the glows/grid */
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
 	margin: 0 0 0.5rem 0;
 	color: var(--text-primary);
 	line-height: 1.2;
 	font-weight: 600;
 }
 
-h1 { font-size: 3.052em; }
-h2 { font-size: 2.441em; }
-h3 { font-size: 1.953em; }
-h4 { font-size: 1.563em; font-family: var(--font-serif); font-style: italic; color: var(--accent-green); }
-h5 { font-size: 1.25em; }
+h1 {
+	font-size: 3.052em;
+}
 
-strong, b { font-weight: 700; color: var(--text-primary); }
+h2 {
+	font-size: 2.441em;
+}
+
+h3 {
+	font-size: 1.953em;
+}
+
+h4 {
+	font-size: 1.563em;
+	font-family: var(--font-serif);
+	font-style: italic;
+	color: var(--accent-green);
+}
+
+h5 {
+	font-size: 1.25em;
+}
+
+strong,
+b {
+	font-weight: 700;
+	color: var(--text-primary);
+}
 
 a {
 	color: var(--text-muted);
@@ -64,11 +91,17 @@ a:hover {
 	text-underline-offset: 4px;
 }
 
-p { margin-bottom: 1em; color: var(--text-muted); }
+p {
+	margin-bottom: 1em;
+	color: var(--text-muted);
+}
 
-.prose p { margin-bottom: 2em; }
+.prose p {
+	margin-bottom: 2em;
+}
 
-textarea, input {
+textarea,
+input {
 	width: 100%;
 	font-family: var(--font-mono);
 	font-size: 16px;
@@ -78,16 +111,33 @@ textarea, input {
 	padding: 0.5em;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
 	outline: 1px solid var(--accent-green);
 	border-color: var(--accent-green);
 }
 
-table { width: 100%; border-collapse: collapse; }
-th, td { border: 1px solid var(--grid-line); padding: 0.5em; text-align: left; }
-th { color: var(--text-primary); }
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
 
-img { max-width: 100%; height: auto; border: 1px solid var(--grid-line); }
+th,
+td {
+	border: 1px solid var(--grid-line);
+	padding: 0.5em;
+	text-align: left;
+}
+
+th {
+	color: var(--text-primary);
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+	border: 1px solid var(--grid-line);
+}
 
 code {
 	padding: 2px 5px;
@@ -103,7 +153,9 @@ pre {
 	overflow-x: auto;
 }
 
-pre > code { all: unset; }
+pre>code {
+	all: unset;
+}
 
 blockquote {
 	border-left: 2px solid var(--accent-green);
@@ -122,16 +174,33 @@ hr {
 }
 
 @media (max-width: 720px) {
-	body { font-size: 16px; }
-	main { padding: 1em; }
-	h1 { font-size: 2.5em; }
-	h2 { font-size: 2em; }
+	body {
+		font-size: 16px;
+		overflow-x: hidden;
+	}
+
+	main {
+		padding: 1em;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	h1 {
+		font-size: 2.5em;
+	}
+
+	h2 {
+		font-size: 2em;
+	}
 }
 
 .sr-only {
-	border: 0; padding: 0; margin: 0;
+	border: 0;
+	padding: 0;
+	margin: 0;
 	position: absolute !important;
-	height: 1px; width: 1px;
+	height: 1px;
+	width: 1px;
 	overflow: hidden;
 	clip: rect(1px 1px 1px 1px);
 	clip: rect(1px, 1px, 1px, 1px);
@@ -139,14 +208,26 @@ hr {
 	white-space: nowrap;
 }
 
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 /* Base Theme Utilities */
+.text-justify {
+	text-align: justify;
+}
+
 .grid-overlay {
 	position: fixed;
-	top: 0; left: 0;
-	width: 100vw; height: 100vh;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
 	pointer-events: none;
 	z-index: 0;
-	background-image: 
+	background-image:
 		linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
 		linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
 	background-size: 5rem 5rem;
@@ -154,8 +235,10 @@ hr {
 
 .ambient-glow {
 	position: fixed;
-	width: 50vw; height: 50vw;
-	max-width: 800px; max-height: 800px;
+	width: 50vw;
+	height: 50vw;
+	max-width: 800px;
+	max-height: 800px;
 	background: radial-gradient(circle, rgba(0, 255, 102, 0.08) 0%, transparent 70%);
 	border-radius: 50%;
 	filter: blur(100px);
@@ -163,6 +246,21 @@ hr {
 	pointer-events: none;
 }
 
-.glow-tr { top: -20%; right: -10%; }
-.glow-bl { bottom: -20%; left: -10%; }
-.glow-center { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100vw; height: 100vh; background: radial-gradient(circle, rgba(0, 255, 102, 0.03) 0%, transparent 60%); }
+.glow-tr {
+	top: -20%;
+	right: -10%;
+}
+
+.glow-bl {
+	bottom: -20%;
+	left: -10%;
+}
+
+.glow-center {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 100vw;
+	height: 100vh;
+	background: radial-gradient(circle, rgba(0, 255, 102, 0.03) 0%, transparent 60%);
+}
