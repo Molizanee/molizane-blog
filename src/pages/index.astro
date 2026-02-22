@@ -1,8 +1,14 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
 ---
 
 <!doctype html>
@@ -11,39 +17,181 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
 	</head>
 	<body>
+		<!-- Global Effects -->
+		<div class="grid-overlay"></div>
+		<div class="ambient-glow glow-tr"></div>
+		<div class="ambient-glow glow-bl"></div>
+
 		<Header />
+
 		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+			<section class="hero">
+				<h1 class="stagger-1" data-i18n="hero.david">
+					David <span class="asterisk">*</span>
+				</h1>
+				<h1 class="stagger-2 italic" data-i18n="hero.molizane">Molizane</h1>
+				<h1 class="stagger-3" data-i18n="hero.software">
+					<i>&amp;</i> Software
+				</h1>
+				<p class="hero-subtext" data-i18n="hero.subtext">
+					Build cool software and study data & AI. Experimental signals and
+					technical writings.
+				</p>
+			</section>
+
+			<section class="latest-posts">
+				<h2 class="section-title" data-i18n="home.latestPosts">Latest posts</h2>
+				<ul class="post-list" id="post-feed">
+					{
+						posts.slice(0, 5).map((post) => (
+							<li>
+								<a href={`/blog/${post.id}/`}>
+									<span class="date">
+										<FormattedDate date={post.data.pubDate} />
+									</span>
+									<span class="title">{post.data.title}</span>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	.hero {
+		margin: 6em 0 8em;
+		position: relative;
+	}
+	.hero h1 {
+		margin: 0;
+		line-height: 1;
+		font-size: 5rem;
+		text-transform: uppercase;
+		letter-spacing: -2px;
+	}
+	.stagger-1 {
+		font-family: var(--font-mono);
+	}
+	.stagger-2 {
+		font-family: var(--font-serif);
+		margin-left: 10%;
+		color: var(--text-muted);
+	}
+	.stagger-3 {
+		font-family: var(--font-mono);
+		margin-left: 5%;
+	}
+	.italic {
+		font-style: italic;
+		font-weight: 400;
+	}
+	.asterisk {
+		color: var(--accent-green);
+		font-family: var(--font-serif);
+		font-size: 1.2em;
+		vertical-align: super;
+		display: inline-block;
+		text-shadow: 0 0 20px rgba(0, 255, 102, 0.8);
+		animation: pulse 2s infinite alternate;
+	}
+
+	@keyframes pulse {
+		0% {
+			text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+			opacity: 0.8;
+		}
+		100% {
+			text-shadow: 0 0 30px rgba(0, 255, 102, 1);
+			opacity: 1;
+		}
+	}
+
+	.hero-subtext {
+		margin-top: 3em;
+		max-width: 500px;
+		font-family: var(--font-mono);
+		color: var(--text-muted);
+		border-left: 1px solid var(--accent-green);
+		padding-left: 1em;
+	}
+
+	.latest-posts {
+		margin-top: 4em;
+		border-top: 1px solid var(--grid-line);
+		padding-top: 4em;
+	}
+	.section-title {
+		font-family: var(--font-serif);
+		font-style: italic;
+		color: var(--text-primary);
+		font-size: 2rem;
+		margin-bottom: 2em;
+		font-weight: 400;
+	}
+
+	.post-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+	.post-list li {
+		border-bottom: 1px solid var(--grid-line);
+	}
+	.post-list li:last-child {
+		border-bottom: none;
+	}
+	.post-list a {
+		display: grid;
+		grid-template-columns: 150px 1fr;
+		gap: 2em;
+		padding: 1.5em 0;
+		text-decoration: none;
+		align-items: baseline;
+		transition: background-color 0.2s ease;
+	}
+	.post-list a:hover {
+		background-color: rgba(255, 255, 255, 0.02);
+	}
+	.post-list .date {
+		font-family: var(--font-mono);
+		font-size: 0.85em;
+		color: var(--text-muted);
+	}
+	.post-list .title {
+		font-family: var(--font-mono);
+		font-size: 1.2em;
+		color: var(--text-primary);
+		position: relative;
+		display: inline-block;
+	}
+	.post-list a:hover .title {
+		color: var(--accent-green);
+	}
+	.post-list a:hover .title::after {
+		content: "";
+		position: absolute;
+		left: 0;
+		bottom: -4px;
+		width: 100%;
+		height: 1px;
+		background-color: var(--accent-green);
+	}
+
+	@media (max-width: 720px) {
+		.hero h1 {
+			font-size: 3rem;
+		}
+		.stagger-2,
+		.stagger-3 {
+			margin-left: 0;
+		}
+		.post-list a {
+			grid-template-columns: 1fr;
+			gap: 0.5em;
+		}
+	}
+</style>

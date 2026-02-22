@@ -1,0 +1,177 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { SITE_DESCRIPTION, SITE_TITLE } from "../consts";
+import { Image } from "astro:assets";
+import coreImage from "../assets/projects/core/core-resumes.png";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`Projects | ${SITE_TITLE}`}
+      description={SITE_DESCRIPTION}
+    />
+  </head>
+  <body>
+    <!-- Global Effects -->
+    <div class="grid-overlay"></div>
+    <div class="ambient-glow glow-tr"></div>
+    <div class="ambient-glow glow-bl"></div>
+
+    <Header />
+
+    <main>
+      <section class="projects-section">
+        <h1 class="page-title" data-i18n="projects.title">
+          Projects <span class="asterisk">*</span>
+        </h1>
+        <p class="description" data-i18n="projects.desc">
+          A collection of my recent work and side projects.
+        </p>
+
+        <div class="project-grid">
+          <a
+            href="https://core.molizane.app"
+            target="_blank"
+            class="project-card"
+          >
+            <div class="image-wrapper">
+              <Image src={coreImage} alt="core screenshot" />
+            </div>
+            <div class="project-info">
+              <span class="title">core</span>
+              <span class="arrow">-&gt;</span>
+            </div>
+          </a>
+        </div>
+      </section>
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .projects-section {
+    margin: 6em 0 8em;
+  }
+  .page-title {
+    margin: 0;
+    line-height: 1;
+    font-size: 4rem;
+    text-transform: uppercase;
+    letter-spacing: -2px;
+    font-family: var(--font-mono);
+  }
+  .asterisk {
+    color: var(--accent-green);
+    font-family: var(--font-serif);
+    font-size: 1.2em;
+    vertical-align: super;
+    display: inline-block;
+    text-shadow: 0 0 20px rgba(0, 255, 102, 0.8);
+    animation: pulse 2s infinite alternate;
+  }
+  .description {
+    margin-top: 2em;
+    margin-bottom: 4em;
+    max-width: 500px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    border-left: 1px solid var(--accent-green);
+    padding-left: 1em;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2em;
+  }
+
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    border: 1px solid var(--grid-line);
+    background: rgba(255, 255, 255, 0.02);
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease;
+    overflow: hidden;
+  }
+
+  .project-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-green);
+  }
+
+  .image-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-bottom: 1px solid var(--grid-line);
+  }
+
+  .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .project-card:hover .image-wrapper img {
+    transform: scale(1.05);
+  }
+
+  .project-info {
+    padding: 1.5em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .project-info .title {
+    font-family: var(--font-mono);
+    font-size: 1.2em;
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .project-info .arrow {
+    font-family: var(--font-mono);
+    color: var(--accent-green);
+    font-weight: 700;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .project-card:hover .arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  @keyframes pulse {
+    0% {
+      text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
+      opacity: 0.8;
+    }
+    100% {
+      text-shadow: 0 0 30px rgba(0, 255, 102, 1);
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .page-title {
+      font-size: 3rem;
+    }
+    .project-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

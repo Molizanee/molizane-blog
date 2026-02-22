@@ -1,0 +1,36 @@
+export const defaultLang = 'en';
+
+export const ui = {
+  en: {
+    'nav.home': 'Home',
+    'nav.about': 'About',
+    'nav.projects': 'Projects',
+    'hero.david': 'David <span class="asterisk">*</span>',
+    'hero.molizane': 'Molizane',
+    'hero.software': '<i>&amp;</i> Software',
+    'hero.subtext': 'Build cool software and study data & AI. Experimental signals and technical writings.',
+    'home.latestPosts': 'Latest posts',
+    'projects.title': 'Projects <span class="asterisk">*</span>',
+    'projects.desc': 'A collection of my recent work and side projects.',
+    'about.title': 'About Me',
+    'about.p1': 'Build cool software and study data & AI.',
+    'about.p2': 'I live in Leme, São Paulo, Brazil. Currently I work as an Automation Engineer at Guanabara Group. I am always creating new things on my GitHub and projects that are useful to use.',
+    'blog.lastUpdated': 'Last updated on',
+  },
+  'pt-br': {
+    'nav.home': 'Início',
+    'nav.about': 'Sobre',
+    'nav.projects': 'Projetos',
+    'hero.david': 'David <span class="asterisk">*</span>',
+    'hero.molizane': 'Molizane',
+    'hero.software': '<i>&amp;</i> Software',
+    'hero.subtext': 'Construo software legal e estudo dados & IA. Sinais experimentais e textos técnicos.',
+    'home.latestPosts': 'Últimas postagens',
+    'projects.title': 'Projetos <span class="asterisk">*</span>',
+    'projects.desc': 'Uma coleção dos meus trabalhos recentes e projetos paralelos.',
+    'about.title': 'Sobre Mim',
+    'about.p1': 'Construo software legal e estudo dados & IA.',
+    'about.p2': 'Eu moro em Leme, São Paulo, Brasil. Atualmente atuo como Engenheiro de Automações no Grupo Guanabara. Estou sempre criando coisas novas no meu GitHub e projetos que sejam úteis de usar.',
+    'blog.lastUpdated': 'Última atualização em',
+  },
+} as const;

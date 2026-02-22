@@ -1,0 +1,90 @@
+---
+
+---
+
+<div class="lang-select-wrapper">
+  <select id="lang-select" aria-label="Select language">
+    <option value="en">EN</option>
+    <option value="pt-br">PT-BR</option>
+  </select>
+</div>
+
+<script>
+  import { ui } from "../i18n/ui";
+
+  function applyTranslations(lang: keyof typeof ui) {
+    const dict = ui[lang] || ui["en"];
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (key && dict[key as keyof typeof dict]) {
+        el.innerHTML = dict[key as keyof typeof dict];
+      }
+    });
+  }
+
+  function updateLang(lang: string) {
+    document.documentElement.lang = lang;
+    localStorage.setItem("site-lang", lang);
+    document.dispatchEvent(new CustomEvent("languagechange", { detail: lang }));
+    applyTranslations(lang as keyof typeof ui);
+  }
+
+  const select = document.getElementById("lang-select") as HTMLSelectElement;
+
+  if (select) {
+    const stored = localStorage.getItem("site-lang");
+    let initialLang = "en";
+
+    if (stored === "en" || stored === "pt-br") {
+      initialLang = stored;
+    } else {
+      const browserLang = navigator.language.toLowerCase();
+      if (browserLang.includes("pt")) {
+        initialLang = "pt-br";
+      }
+    }
+
+    select.value = initialLang;
+    updateLang(initialLang);
+
+    select.addEventListener("change", (e) => {
+      updateLang((e.target as HTMLSelectElement).value);
+    });
+  }
+
+  document.addEventListener("astro:page-load", () => {
+    const lang = localStorage.getItem("site-lang") || "en";
+    applyTranslations(lang as keyof typeof ui);
+  });
+</script>
+
+<style>
+  .lang-select-wrapper {
+    display: flex;
+    align-items: center;
+    margin-left: 1em;
+  }
+  select {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--grid-line);
+    padding: 0.2em 0.5em;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    border-radius: 4px;
+    cursor: pointer;
+    outline: none;
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  select:hover,
+  select:focus {
+    color: var(--text-primary);
+    border-color: var(--accent-green);
+  }
+  select option {
+    background: var(--bg-color);
+    color: var(--text-primary);
+  }
+</style>
