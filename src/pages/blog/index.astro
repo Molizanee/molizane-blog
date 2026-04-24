@@ -10,7 +10,7 @@ const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
-const categories = ['View all', 'Design', 'Product', 'Development', 'Culture'];
+const categories = ['View all', 'AI', 'Backend', 'Open Source', 'Career', 'Life'];
 ---
 
 <!doctype html>
@@ -23,12 +23,11 @@ const categories = ['View all', 'Design', 'Product', 'Development', 'Culture'];
 		<main>
 			<section class="hero">
 				<div class="hero-title">
-					<span class="eyebrow">Untitled Blog</span>
-					<h1>Writing on craft,<br />product and taste.</h1>
+					<span class="eyebrow">Molizane's Blog</span>
+					<h1>Open-sourcing<br />my mental vault.</h1>
 				</div>
 				<p class="hero-lede">
-					Essays, notes and field reports — a slow-paced journal exploring how thoughtful design
-					shapes the things we ship. New pieces land every other week.
+					Essays, notes, and field reports. A technical journal exploring the intersection of artificial intelligence, data, and the engineering craft required to make them work together.
 				</p>
 			</section>
 
@@ -45,12 +44,13 @@ const categories = ['View all', 'Design', 'Product', 'Development', 'Culture'];
 			<section class="grid" aria-label="All posts">
 				{
 					posts.map((post, i) => (
-						<div class:list={['grid-item', { 'grid-item--wide': i === 0 }]}>
+						<div class:list={['grid-item', { 'grid-item--wide': i === 0 }]} data-category={post.data.category}>
 							<ArticleCard
 								href={`/blog/${post.id}/`}
 								title={post.data.title}
 								pubDate={post.data.pubDate}
 								image={post.data.heroImage}
+								category={post.data.category}
 								featured={i === 0}
 							/>
 						</div>
@@ -59,6 +59,31 @@ const categories = ['View all', 'Design', 'Product', 'Development', 'Culture'];
 			</section>
 		</main>
 		<Footer />
+
+		<script>
+			const tabs = document.querySelectorAll<HTMLButtonElement>('.tab');
+			const items = document.querySelectorAll<HTMLElement>('.grid-item');
+
+			tabs.forEach((tab) => {
+				tab.addEventListener('click', () => {
+					tabs.forEach((t) => {
+						t.classList.remove('active');
+						t.setAttribute('aria-pressed', 'false');
+					});
+					tab.classList.add('active');
+					tab.setAttribute('aria-pressed', 'true');
+
+					const category = tab.textContent?.trim();
+					items.forEach((item) => {
+						if (category === 'View all' || item.dataset.category === category) {
+							item.style.display = '';
+						} else {
+							item.style.display = 'none';
+						}
+					});
+				});
+			});
+		</script>
 	</body>
 </html>
 

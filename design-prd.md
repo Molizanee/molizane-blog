@@ -53,7 +53,7 @@ A primarily monochromatic base to reduce cognitive load, punctuated by one vibra
 ## 5. Page Layouts
 
 ### 5.1. Blog Index Page
-* **Hero Section:** Left-aligned oversized Sans-Serif title ("Untitled Blog") with a smaller, secondary descriptive text block pushed to the right side of the grid.
+* **Hero Section:** Left-aligned oversized Sans-Serif title ("Molizane's Blog") with a smaller, secondary descriptive text block pushed to the right side of the grid.
 * **Discovery:** Inline email subscription block immediately following the hero, followed by horizontal category tabs.
 * **Grid:** A 2-column or 3-column masonry/grid layout utilizing the frosted-glass image cards.
 

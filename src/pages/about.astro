@@ -43,7 +43,7 @@ const stack = [
 					<h1>I build production-ready LLM applications and autonomous agents.</h1>
 					<p class="lede">
 						AI Engineer with a background in software engineering, working in the tech industry
-						since 2023. Currently at <strong>Arara Tech</strong> — a Grupo Guanabara startup —
+						since 2023. Currently at <strong>Arara Tech</strong>, a Grupo Guanabara startup,
 						developing AI solutions to modernize the transportation sector.
 					</p>
 					<div class="actions">
@@ -79,30 +79,9 @@ const stack = [
 
 			<section class="work">
 				<h2>Recent work</h2>
-				<div class="work-list">
-					<article class="work-item">
-						<h3>Executive-Level AI Agents</h3>
-						<p>
-							Built a modern <em>Text-to-SQL</em> AI Agent using LangChain, LangGraph, context
-							engineering, and a semantic layer. Gives C-level executives instant strategic insights
-							and accelerates data-driven business decisions.
-						</p>
-					</article>
-					<article class="work-item">
-						<h3>Autonomous Workflows &amp; RAG</h3>
-						<p>
-							Engineered RAG pipelines from scratch in Python with Qdrant to power autonomous
-							agents, automating complex operational workflows and significantly reducing manual
-							effort.
-						</p>
-					</article>
-					<article class="work-item">
-						<h3>LLMOps &amp; Cost Management</h3>
-						<p>
-							Implemented observability and cost control practices across distributed AI systems —
-							LiteLLM for token management and Langfuse for application evaluations.
-						</p>
-					</article>
+				<div class="work-list" id="work-list">
+					{/* Populated dynamically from GitHub API */}
+					<div class="work-loading" id="work-loading">Loading repositories...</div>
 				</div>
 			</section>
 
@@ -146,6 +125,82 @@ const stack = [
 			</section>
 		</main>
 		<Footer />
+
+		<script>
+			const GITHUB_USER = 'Molizanee';
+
+			async function getCommitCount(repo: string): Promise<number> {
+				const res = await fetch(
+					`https://api.github.com/repos/${GITHUB_USER}/${repo}/commits?per_page=1`,
+				);
+				if (!res.ok) return 0;
+				const link = res.headers.get('Link');
+				if (!link) {
+					const data = await res.json();
+					return Array.isArray(data) ? data.length : 0;
+				}
+				const match = link.match(/page=(\d+)>;\s*rel="last"/);
+				return match ? parseInt(match[1], 10) : 1;
+			}
+
+			async function loadRepos() {
+				const list = document.getElementById('work-list')!;
+				const loading = document.getElementById('work-loading')!;
+
+				try {
+					const res = await fetch(
+						`https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=updated`,
+					);
+					if (!res.ok) throw new Error('Failed to fetch repos');
+
+					const repos = (await res.json()) as Array<{
+						name: string;
+						html_url: string;
+						description: string | null;
+						language: string | null;
+					}>;
+
+					// Exclude the profile README repo
+					const projects = repos.filter((r) => r.name !== GITHUB_USER);
+
+					const withCounts = await Promise.all(
+						projects.map(async (repo) => ({
+							...repo,
+							commits: await getCommitCount(repo.name),
+						})),
+					);
+
+					withCounts.sort((a, b) => b.commits - a.commits);
+					const top3 = withCounts.slice(0, 3);
+
+					loading.remove();
+
+					for (const repo of top3) {
+						const card = document.createElement('a');
+						card.href = repo.html_url;
+						card.target = '_blank';
+						card.rel = 'noopener';
+						card.className = 'work-item work-link';
+
+						const title = repo.name
+							.replace(/-/g, ' ')
+							.replace(/\b\w/g, (c) => c.toUpperCase());
+
+						card.innerHTML = `
+							<h3>${title}</h3>
+							<p>${repo.description || 'No description.'}</p>
+							<span class="work-meta">${repo.language || 'Code'} &middot; ${repo.commits} commits</span>
+						`;
+
+						list.appendChild(card);
+					}
+				} catch {
+					loading.textContent = 'Could not load repositories.';
+				}
+			}
+
+			loadRepos();
+		</script>
 	</body>
 </html>
 
@@ -223,34 +278,52 @@ const stack = [
 		grid-template-columns: repeat(3, 1fr);
 		gap: 1.5rem;
 	}
-	.work-item {
+	.work-list :global(.work-item) {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
 		padding: 1.75rem;
 		transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 	}
-	.work-item:hover {
+	.work-list :global(.work-item:hover) {
 		border-color: var(--color-border-strong);
 		box-shadow: var(--shadow-sm);
 		transform: translateY(-2px);
 	}
-	.work-item h3 {
+	.work-list :global(.work-item h3) {
 		font-family: var(--font-sans);
 		font-weight: 700;
 		font-size: var(--text-lg);
 		letter-spacing: -0.01em;
 		margin: 0 0 0.75rem;
 	}
-	.work-item p {
+	.work-list :global(.work-item p) {
 		margin: 0;
 		font-size: var(--text-sm);
 		line-height: 1.65;
 		color: var(--color-text-muted);
 	}
-	.work-item em {
-		font-style: italic;
-		color: var(--color-text);
+	.work-loading {
+		grid-column: 1 / -1;
+		text-align: center;
+		padding: 3rem 1rem;
+		font-family: var(--font-mono);
+		font-size: var(--text-sm);
+		color: var(--color-text-muted);
+	}
+	.work-list :global(.work-link) {
+		text-decoration: none;
+		color: inherit;
+		display: block;
+	}
+	.work-list :global(.work-meta) {
+		display: block;
+		margin-top: 0.75rem;
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		font-weight: 500;
+		letter-spacing: 0.04em;
+		color: var(--color-text-muted);
 	}
 
 	.stack-list {
