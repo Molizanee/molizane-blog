@@ -1,114 +1,150 @@
 ---
-import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
+import ArticleCard from '../../components/ArticleCard.astro';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
 const posts = (await getCollection('blog')).sort(
 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+const categories = ['View all', 'Design', 'Product', 'Development', 'Culture'];
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
+		<BaseHead title={`Blog · ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
 	</head>
 	<body>
 		<Header />
 		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
+			<section class="hero">
+				<div class="hero-title">
+					<span class="eyebrow">Untitled Blog</span>
+					<h1>Writing on craft,<br />product and taste.</h1>
+				</div>
+				<p class="hero-lede">
+					Essays, notes and field reports — a slow-paced journal exploring how thoughtful design
+					shapes the things we ship. New pieces land every other week.
+				</p>
+			</section>
+
+			<nav class="tabs" aria-label="Categories">
+				{
+					categories.map((label, i) => (
+						<button type="button" class:list={['tab', { active: i === 0 }]} aria-pressed={i === 0}>
+							{label}
+						</button>
+					))
+				}
+			</nav>
+
+			<section class="grid" aria-label="All posts">
+				{
+					posts.map((post, i) => (
+						<div class:list={['grid-item', { 'grid-item--wide': i === 0 }]}>
+							<ArticleCard
+								href={`/blog/${post.id}/`}
+								title={post.data.title}
+								pubDate={post.data.pubDate}
+								image={post.data.heroImage}
+								featured={i === 0}
+							/>
+						</div>
+					))
+				}
 			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	.hero {
+		display: grid;
+		grid-template-columns: 1.2fr 1fr;
+		align-items: end;
+		gap: 3rem;
+		padding: 3rem 0 2.5rem;
+	}
+	.hero-title .eyebrow {
+		display: block;
+		margin-bottom: 1.25rem;
+	}
+	.hero-title h1 {
+		margin: 0;
+		font-size: clamp(2.75rem, 7vw + 0.5rem, 6.5rem);
+		letter-spacing: -0.04em;
+		line-height: 0.95;
+	}
+	.hero-lede {
+		font-family: var(--font-serif);
+		font-size: var(--text-lg);
+		line-height: 1.5;
+		color: var(--color-text-muted);
+		max-width: 32ch;
+		margin: 0 0 0.5rem;
+		justify-self: end;
+	}
+
+	.tabs {
+		display: flex;
+		gap: 0.25rem;
+		margin: 2rem 0;
+		overflow-x: auto;
+		scrollbar-width: none;
+		border-bottom: 1px solid var(--color-border);
+	}
+	.tabs::-webkit-scrollbar {
+		display: none;
+	}
+	.tab {
+		font-family: var(--font-ui);
+		font-size: var(--text-sm);
+		font-weight: 500;
+		color: var(--color-text-muted);
+		background: transparent;
+		border: 0;
+		padding: 0.75rem 1rem;
+		cursor: pointer;
+		position: relative;
+		white-space: nowrap;
+		border-bottom: 2px solid transparent;
+		margin-bottom: -1px;
+		transition: color 0.2s ease, border-color 0.2s ease;
+	}
+	.tab:hover {
+		color: var(--color-text);
+	}
+	.tab.active {
+		color: var(--color-text);
+		font-weight: 600;
+		border-bottom-color: var(--color-text);
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1.5rem;
+	}
+	.grid-item--wide {
+		grid-column: 1 / -1;
+	}
+	@media (max-width: 720px) {
+		.hero {
+			grid-template-columns: 1fr;
+			gap: 1.5rem;
+			padding: 1.5rem 0;
+		}
+		.hero-lede {
+			justify-self: start;
+			max-width: none;
+		}
+		.grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

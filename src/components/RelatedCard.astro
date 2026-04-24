@@ -1,0 +1,98 @@
+---
+import FormattedDate from './FormattedDate.astro';
+
+interface Props {
+	href: string;
+	title: string;
+	description: string;
+	pubDate: Date;
+	variant?: 1 | 2 | 3;
+}
+
+const { href, title, description, pubDate, variant = 1 } = Astro.props;
+---
+
+<a href={href} class={`related related--v${variant}`}>
+	<span class="kicker">You may also like</span>
+	<h3 class="title">{title}</h3>
+	<p class="desc">{description}</p>
+	<div class="foot">
+		<FormattedDate date={pubDate} />
+		<span class="arrow" aria-hidden="true">→</span>
+	</div>
+</a>
+
+<style>
+	.related {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 2rem 1.75rem 1.75rem;
+		border-radius: var(--radius-lg);
+		text-decoration: none;
+		color: #fff;
+		aspect-ratio: 4 / 5;
+		position: relative;
+		overflow: hidden;
+		transition: transform 0.3s ease, box-shadow 0.3s ease;
+	}
+	.related:hover {
+		transform: translateY(-4px);
+		box-shadow: var(--shadow-md);
+	}
+	.related--v1 {
+		background: var(--color-block-1);
+	}
+	.related--v2 {
+		background: var(--color-block-2);
+	}
+	.related--v3 {
+		background: var(--color-block-3);
+	}
+	.kicker {
+		font-family: var(--font-ui);
+		font-size: var(--text-xs);
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: rgba(255, 255, 255, 0.72);
+	}
+	.title {
+		font-family: var(--font-serif);
+		font-weight: 500;
+		font-size: var(--text-2xl);
+		line-height: 1.15;
+		color: #fff;
+		margin: 0.5rem 0 0.75rem;
+		letter-spacing: -0.01em;
+	}
+	.desc {
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		line-height: 1.55;
+		color: rgba(255, 255, 255, 0.85);
+		margin: 0;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+	.foot {
+		margin-top: auto;
+		padding-top: 1.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-family: var(--font-ui);
+		font-size: var(--text-xs);
+		color: rgba(255, 255, 255, 0.78);
+	}
+	.arrow {
+		font-size: 1.25rem;
+		transition: transform 0.25s ease;
+		color: #fff;
+	}
+	.related:hover .arrow {
+		transform: translateX(4px);
+	}
+</style>

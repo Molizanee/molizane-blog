@@ -1,86 +1,434 @@
 ---
 import { Image } from 'astro:assets';
+import type { MarkdownHeading } from 'astro';
 import type { CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import RelatedCard from '../components/RelatedCard.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type PostData = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+interface Props extends PostData {
+	author?: string;
+	category?: string;
+	headings?: MarkdownHeading[];
+	related?: CollectionEntry<'blog'>[];
+	breadcrumbs?: { label: string; href?: string }[];
+}
+
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	author = 'David Molizane',
+	category = 'Essay',
+	headings = [],
+	related = [],
+	breadcrumbs,
+} = Astro.props;
+
+const crumbs = breadcrumbs ?? [
+	{ label: 'Blog', href: '/blog' },
+	{ label: category },
+	{ label: title },
+];
+const initials = author
+	.split(' ')
+	.map((w) => w[0])
+	.join('')
+	.slice(0, 2)
+	.toUpperCase();
+const shareUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).toString() : Astro.url.href;
+const shareText = encodeURIComponent(title);
 ---
 
 <html lang="en">
 	<head>
-		<BaseHead title={title} description={description} />
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
+		<BaseHead title={title} description={description} image={heroImage} />
 	</head>
 
 	<body>
 		<Header />
 		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
+			<div class="post-top">
+				<Breadcrumbs items={crumbs} />
+			</div>
+
+			<header class="post-hero">
+				<div class="post-hero-copy">
+					<span class="eyebrow">{category}</span>
+					<h1>{title}</h1>
+					<p class="post-hero-desc">{description}</p>
+					<div class="byline">
+						<span class="avatar" aria-hidden="true">{initials}</span>
+						<div class="byline-meta">
+							<span class="byline-name">{author}</span>
+							<span class="byline-date">
+								<FormattedDate date={pubDate} />
+								{
+									updatedDate && (
+										<>
+											{' '}
+											· <span class="byline-updated">Updated <FormattedDate date={updatedDate} /></span>
+										</>
+									)
+								}
+							</span>
 						</div>
-						<h1>{title}</h1>
-						<hr />
 					</div>
-					<slot />
+				</div>
+				{
+					heroImage && (
+						<figure class="post-hero-media">
+							<Image src={heroImage} alt="" width={1200} height={1200} />
+						</figure>
+					)
+				}
+			</header>
+
+			<article class="post-layout">
+				<aside class="post-aside" aria-label="Article tools">
+					<div class="sticky">
+						<div class="share">
+							<p class="eyebrow">Share</p>
+							<ul>
+								<li>
+									<a
+										href={`https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`}
+										target="_blank"
+										rel="noopener"
+										aria-label="Share on X"
+									>
+										<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"
+											><path
+												fill="currentColor"
+												d="M14.8 2.5h2.6l-5.7 6.5 6.7 8.5h-5.3l-4.1-5.4-4.7 5.4H1.7l6.1-7-6.4-8H6.8l3.7 4.9 4.3-4.9Zm-.9 13.4h1.5L6.2 4H4.5l9.4 11.9Z"
+											/></svg
+										>
+									</a>
+								</li>
+								<li>
+									<a
+										href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+										target="_blank"
+										rel="noopener"
+										aria-label="Share on LinkedIn"
+									>
+										<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"
+											><path
+												fill="currentColor"
+												d="M5.3 3.5a1.9 1.9 0 1 1-3.8 0 1.9 1.9 0 0 1 3.8 0Zm.1 3H1.6v11.3h3.8V6.5Zm6 0H7.7v11.3h3.8v-5.9c0-3.5 4.5-3.8 4.5 0v5.9h3.8V10c0-5.9-6.7-5.7-8.3-2.8V6.5Z"
+											/></svg
+										>
+									</a>
+								</li>
+								<li>
+									<a
+										href={`mailto:?subject=${shareText}&body=${encodeURIComponent(shareUrl)}`}
+										aria-label="Share by email"
+									>
+										<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"
+											><path
+												fill="currentColor"
+												d="M2.5 4.5h15c.6 0 1 .4 1 1v9c0 .6-.4 1-1 1h-15c-.6 0-1-.4-1-1v-9c0-.6.4-1 1-1Zm.5 1.7v8.3h14V6.2l-7 4.3L3 6.2Zm13.4-.2H3.6L10 9.5l6.4-4Z"
+											/></svg
+										>
+									</a>
+								</li>
+							</ul>
+						</div>
+						<TableOfContents headings={headings} />
+					</div>
+				</aside>
+
+				<div class="post-content">
+					<div class="prose">
+						<slot />
+					</div>
+
+					<section class="comments" aria-labelledby="comments-title">
+						<h2 id="comments-title" class="comments-title">Join the conversation</h2>
+						<form class="comment-form" onsubmit="event.preventDefault();">
+							<div class="comment-field">
+								<label for="comment-name" class="sr-only">Name</label>
+								<input id="comment-name" type="text" placeholder="Your name" required />
+							</div>
+							<div class="comment-field">
+								<label for="comment-body" class="sr-only">Comment</label>
+								<textarea
+									id="comment-body"
+									placeholder="Share your thoughts on this piece…"
+									required></textarea>
+							</div>
+							<div class="comment-actions">
+								<p class="comment-hint">Comments are moderated before appearing.</p>
+								<button type="submit" class="btn btn--accent">Send comment</button>
+							</div>
+						</form>
+					</section>
 				</div>
 			</article>
+
+			{
+				related.length > 0 && (
+					<section class="related-section" aria-labelledby="related-title">
+						<header class="related-header">
+							<h2 id="related-title">You may also like</h2>
+							<a href="/blog" class="link-arrow">Browse all</a>
+						</header>
+						<div class="related-grid">
+							{related.slice(0, 3).map((p, i) => (
+								<RelatedCard
+									href={`/blog/${p.id}/`}
+									title={p.data.title}
+									description={p.data.description}
+									pubDate={p.data.pubDate}
+									variant={((i % 3) + 1) as 1 | 2 | 3}
+								/>
+							))}
+						</div>
+					</section>
+				)
+			}
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	main {
+		max-width: var(--container);
+	}
+	.post-top {
+		padding: 1.5rem 0 2rem;
+	}
+
+	.post-hero {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 3rem;
+		align-items: center;
+		margin-bottom: 4rem;
+	}
+	.post-hero-copy h1 {
+		font-family: var(--font-serif);
+		font-weight: 500;
+		font-size: clamp(2.25rem, 4.5vw + 0.5rem, 4.5rem);
+		letter-spacing: -0.02em;
+		line-height: 1.02;
+		margin: 1rem 0 1.25rem;
+	}
+	.post-hero-desc {
+		font-family: var(--font-serif);
+		font-size: var(--text-lg);
+		color: var(--color-text-muted);
+		line-height: 1.5;
+		margin: 0 0 2rem;
+		max-width: 46ch;
+	}
+	.byline {
+		display: flex;
+		align-items: center;
+		gap: 0.875rem;
+	}
+	.avatar {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		background: var(--color-text);
+		color: var(--color-surface);
+		font-family: var(--font-display);
+		font-weight: 700;
+		font-size: var(--text-xs);
+		letter-spacing: 0.04em;
+	}
+	.byline-meta {
+		display: flex;
+		flex-direction: column;
+		font-family: var(--font-ui);
+		line-height: 1.3;
+	}
+	.byline-name {
+		font-size: var(--text-sm);
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	.byline-date {
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+	}
+	.post-hero-media {
+		margin: 0;
+	}
+	.post-hero-media :global(img) {
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		object-fit: cover;
+		border-radius: var(--radius-lg);
+	}
+
+	.post-layout {
+		display: grid;
+		grid-template-columns: 220px minmax(0, 1fr);
+		gap: 4rem;
+		align-items: start;
+	}
+	.post-aside {
+		position: relative;
+	}
+	.sticky {
+		position: sticky;
+		top: 6rem;
+		display: flex;
+		flex-direction: column;
+		gap: 2.5rem;
+	}
+	.share ul {
+		list-style: none;
+		padding: 0;
+		margin: 1rem 0 0;
+		display: flex;
+		gap: 0.5rem;
+	}
+	.share a {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border-radius: 50%;
+		border: 1px solid var(--color-border);
+		color: var(--color-text-muted);
+		transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+	}
+	.share a:hover {
+		color: var(--color-text);
+		border-color: var(--color-text);
+		background: var(--color-surface);
+	}
+
+	.post-content {
+		max-width: var(--reading-width);
+	}
+	.prose {
+		font-size: 1.125rem;
+		line-height: 1.75;
+		color: var(--color-text);
+	}
+	.prose :global(p) {
+		margin: 0 0 1.6em;
+	}
+	.prose :global(h2) {
+		margin-top: 2.5em;
+		margin-bottom: 0.5em;
+	}
+	.prose :global(h3) {
+		margin-top: 2em;
+		margin-bottom: 0.4em;
+	}
+	.prose :global(img) {
+		margin: 2.5em 0;
+		border-radius: var(--radius-md);
+	}
+	.prose :global(ul),
+	.prose :global(ol) {
+		margin: 0 0 1.6em;
+		padding-left: 1.3em;
+	}
+	.prose :global(li) {
+		margin-bottom: 0.5em;
+	}
+
+	.comments {
+		margin-top: 5rem;
+		padding-top: 2.5rem;
+		border-top: 1px solid var(--color-border);
+	}
+	.comments-title {
+		font-family: var(--font-serif);
+		font-size: var(--text-2xl);
+		margin: 0 0 1.5rem;
+	}
+	.comment-form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	.comment-actions {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-top: 0.25rem;
+	}
+	.comment-hint {
+		margin: 0;
+		font-family: var(--font-ui);
+		font-size: var(--text-xs);
+		color: var(--color-text-muted);
+	}
+
+	.related-section {
+		margin-top: 6rem;
+	}
+	.related-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		margin-bottom: 1.75rem;
+		gap: 1rem;
+	}
+	.related-header h2 {
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: clamp(2rem, 3vw + 1rem, 3.25rem);
+		letter-spacing: -0.03em;
+		margin: 0;
+	}
+	.related-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1.25rem;
+	}
+
+	@media (max-width: 960px) {
+		.post-layout {
+			grid-template-columns: 1fr;
+			gap: 2rem;
+		}
+		.sticky {
+			position: static;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: flex-start;
+			gap: 2rem;
+			flex-wrap: wrap;
+		}
+	}
+	@media (max-width: 720px) {
+		.post-hero {
+			grid-template-columns: 1fr;
+			gap: 1.75rem;
+			margin-bottom: 2.5rem;
+		}
+		.post-hero-media {
+			order: -1;
+		}
+		.related-grid {
+			grid-template-columns: 1fr;
+		}
+		.comment-actions {
+			flex-direction: column;
+			align-items: stretch;
+		}
+	}
+</style>

@@ -1,0 +1,307 @@
+---
+// Obsidian-style force-directed notes graph.
+// Nodes drift with springs on edges + pairwise repulsion + gentle centering.
+---
+
+<div class="graph" data-notes-graph aria-hidden="true">
+	<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" role="presentation">
+		<g class="edges"></g>
+		<g class="nodes"></g>
+		<g class="labels"></g>
+	</svg>
+</div>
+
+<script>
+	type Node = {
+		id: number;
+		label: string;
+		r: number;
+		x: number;
+		y: number;
+		vx: number;
+		vy: number;
+		accent?: boolean;
+	};
+
+	const NODES: Omit<Node, 'x' | 'y' | 'vx' | 'vy'>[] = [
+		{ id: 0, label: 'craft', r: 11, accent: true },
+		{ id: 1, label: 'design', r: 8 },
+		{ id: 2, label: 'product', r: 8 },
+		{ id: 3, label: 'essays', r: 9 },
+		{ id: 4, label: 'notes', r: 6 },
+		{ id: 5, label: 'systems', r: 7 },
+		{ id: 6, label: 'tools', r: 5 },
+		{ id: 7, label: 'reading', r: 5 },
+		{ id: 8, label: 'taste', r: 6 },
+		{ id: 9, label: 'process', r: 5 },
+		{ id: 10, label: 'ship', r: 6 },
+		{ id: 11, label: 'ideas', r: 5 },
+		{ id: 12, label: 'type', r: 4 },
+	];
+
+	const EDGES: [number, number][] = [
+		[0, 1],
+		[0, 2],
+		[0, 3],
+		[0, 5],
+		[0, 8],
+		[1, 4],
+		[1, 12],
+		[2, 5],
+		[2, 11],
+		[3, 8],
+		[3, 9],
+		[3, 4],
+		[5, 6],
+		[5, 10],
+		[6, 7],
+		[8, 9],
+		[10, 11],
+		[4, 7],
+	];
+
+	const W = 400;
+	const H = 400;
+	const SVG_NS = 'http://www.w3.org/2000/svg';
+
+	function init(root: HTMLElement) {
+		const svg = root.querySelector('svg') as SVGSVGElement;
+		const edgeLayer = svg.querySelector('.edges') as SVGGElement;
+		const nodeLayer = svg.querySelector('.nodes') as SVGGElement;
+		const labelLayer = svg.querySelector('.labels') as SVGGElement;
+
+		const nodes: Node[] = NODES.map((n, i) => {
+			const angle = (i / NODES.length) * Math.PI * 2;
+			const rad = 110 + Math.random() * 40;
+			return {
+				...n,
+				x: W / 2 + Math.cos(angle) * rad,
+				y: H / 2 + Math.sin(angle) * rad,
+				vx: 0,
+				vy: 0,
+			};
+		});
+
+		const edgeEls = EDGES.map(() => {
+			const l = document.createElementNS(SVG_NS, 'line');
+			l.setAttribute('class', 'edge');
+			edgeLayer.appendChild(l);
+			return l;
+		});
+
+		const nodeEls = nodes.map((n) => {
+			const c = document.createElementNS(SVG_NS, 'circle');
+			c.setAttribute('class', n.accent ? 'node node--accent' : 'node');
+			c.setAttribute('r', String(n.r));
+			c.setAttribute('data-id', String(n.id));
+			nodeLayer.appendChild(c);
+			return c;
+		});
+
+		const labelEls = nodes.map((n) => {
+			const t = document.createElementNS(SVG_NS, 'text');
+			t.setAttribute('class', 'label');
+			t.setAttribute('text-anchor', 'middle');
+			t.setAttribute('dy', String(-n.r - 6));
+			t.textContent = n.label;
+			labelLayer.appendChild(t);
+			return t;
+		});
+
+		let hoverId: number | null = null;
+		nodeEls.forEach((el, i) => {
+			el.addEventListener('mouseenter', () => {
+				hoverId = nodes[i].id;
+				svg.classList.add('has-hover');
+				updateHover();
+			});
+			el.addEventListener('mouseleave', () => {
+				hoverId = null;
+				svg.classList.remove('has-hover');
+				updateHover();
+			});
+		});
+
+		function updateHover() {
+			const connected = new Set<number>();
+			if (hoverId != null) {
+				connected.add(hoverId);
+				EDGES.forEach(([a, b]) => {
+					if (a === hoverId) connected.add(b);
+					if (b === hoverId) connected.add(a);
+				});
+			}
+			nodeEls.forEach((el, i) => {
+				el.classList.toggle('is-active', connected.has(nodes[i].id));
+			});
+			edgeEls.forEach((el, i) => {
+				const [a, b] = EDGES[i];
+				el.classList.toggle('is-active', connected.has(a) && connected.has(b));
+			});
+			labelEls.forEach((el, i) => {
+				el.classList.toggle('is-active', connected.has(nodes[i].id));
+			});
+		}
+
+		const REPULSION = 900;
+		const SPRING = 0.018;
+		const REST_LEN = 78;
+		const CENTER_PULL = 0.0035;
+		const DAMP = 0.86;
+
+		function tick() {
+			for (let i = 0; i < nodes.length; i++) {
+				for (let j = i + 1; j < nodes.length; j++) {
+					const a = nodes[i];
+					const b = nodes[j];
+					const dx = b.x - a.x;
+					const dy = b.y - a.y;
+					const d2 = dx * dx + dy * dy + 0.01;
+					const d = Math.sqrt(d2);
+					const f = REPULSION / d2;
+					const fx = (f * dx) / d;
+					const fy = (f * dy) / d;
+					a.vx -= fx;
+					a.vy -= fy;
+					b.vx += fx;
+					b.vy += fy;
+				}
+			}
+			for (const [i, j] of EDGES) {
+				const a = nodes[i];
+				const b = nodes[j];
+				const dx = b.x - a.x;
+				const dy = b.y - a.y;
+				const d = Math.sqrt(dx * dx + dy * dy) || 1;
+				const f = (d - REST_LEN) * SPRING;
+				const fx = (f * dx) / d;
+				const fy = (f * dy) / d;
+				a.vx += fx;
+				a.vy += fy;
+				b.vx -= fx;
+				b.vy -= fy;
+			}
+			for (const n of nodes) {
+				n.vx += (W / 2 - n.x) * CENTER_PULL;
+				n.vy += (H / 2 - n.y) * CENTER_PULL;
+				n.vx *= DAMP;
+				n.vy *= DAMP;
+				n.x += n.vx;
+				n.y += n.vy;
+			}
+		}
+
+		function render() {
+			for (let i = 0; i < edgeEls.length; i++) {
+				const [a, b] = EDGES[i];
+				edgeEls[i].setAttribute('x1', String(nodes[a].x));
+				edgeEls[i].setAttribute('y1', String(nodes[a].y));
+				edgeEls[i].setAttribute('x2', String(nodes[b].x));
+				edgeEls[i].setAttribute('y2', String(nodes[b].y));
+			}
+			for (let i = 0; i < nodeEls.length; i++) {
+				nodeEls[i].setAttribute('cx', String(nodes[i].x));
+				nodeEls[i].setAttribute('cy', String(nodes[i].y));
+				labelEls[i].setAttribute('x', String(nodes[i].x));
+				labelEls[i].setAttribute('y', String(nodes[i].y));
+			}
+		}
+
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		let raf = 0;
+		let ticks = 0;
+		const maxTicks = reduced ? 220 : Infinity;
+
+		function loop() {
+			tick();
+			render();
+			ticks++;
+			if (ticks < maxTicks) {
+				raf = requestAnimationFrame(loop);
+			}
+		}
+		loop();
+
+		// Occasional gentle nudges so the graph feels alive without being chaotic.
+		if (!reduced) {
+			setInterval(() => {
+				const n = nodes[Math.floor(Math.random() * nodes.length)];
+				n.vx += (Math.random() - 0.5) * 3;
+				n.vy += (Math.random() - 0.5) * 3;
+			}, 3500);
+		}
+
+		const io = new IntersectionObserver((entries) => {
+			for (const e of entries) {
+				if (!e.isIntersecting && raf) {
+					cancelAnimationFrame(raf);
+					raf = 0;
+				} else if (e.isIntersecting && !raf && ticks < maxTicks) {
+					raf = requestAnimationFrame(loop);
+				}
+			}
+		});
+		io.observe(root);
+	}
+
+	document.querySelectorAll<HTMLElement>('[data-notes-graph]').forEach(init);
+</script>
+
+<style>
+	.graph {
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		position: relative;
+	}
+	.graph svg {
+		width: 100%;
+		height: 100%;
+		display: block;
+		overflow: visible;
+	}
+	.graph :global(.edge) {
+		stroke: var(--color-border-strong);
+		stroke-width: 1;
+		opacity: 0.55;
+		transition: stroke 0.3s ease, opacity 0.3s ease, stroke-width 0.3s ease;
+	}
+	.graph :global(.node) {
+		fill: var(--color-text);
+		stroke: var(--color-bg);
+		stroke-width: 3;
+		cursor: pointer;
+		transition: fill 0.3s ease, r 0.3s ease, opacity 0.3s ease;
+	}
+	.graph :global(.node--accent) {
+		fill: var(--color-accent);
+	}
+	.graph :global(.label) {
+		font-family: var(--font-ui);
+		font-size: 10px;
+		font-weight: 600;
+		fill: var(--color-text-muted);
+		opacity: 0;
+		transition: opacity 0.25s ease;
+		pointer-events: none;
+		letter-spacing: 0.02em;
+	}
+	.graph svg.has-hover :global(.node) {
+		opacity: 0.25;
+	}
+	.graph svg.has-hover :global(.edge) {
+		opacity: 0.15;
+	}
+	.graph svg.has-hover :global(.node.is-active) {
+		opacity: 1;
+		fill: var(--color-accent);
+	}
+	.graph svg.has-hover :global(.edge.is-active) {
+		stroke: var(--color-accent);
+		opacity: 0.9;
+		stroke-width: 1.5;
+	}
+	.graph :global(.label.is-active) {
+		opacity: 1;
+		fill: var(--color-text);
+	}
+</style>

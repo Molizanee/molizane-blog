@@ -6,15 +6,24 @@ export async function getStaticPaths() {
 	const posts = await getCollection('blog');
 	return posts.map((post) => ({
 		params: { slug: post.id },
-		props: post,
+		props: { post, all: posts },
 	}));
 }
-type Props = CollectionEntry<'blog'>;
 
-const post = Astro.props;
-const { Content } = await render(post);
+interface Props {
+	post: CollectionEntry<'blog'>;
+	all: CollectionEntry<'blog'>[];
+}
+
+const { post, all } = Astro.props;
+const { Content, headings } = await render(post);
+
+const related = all
+	.filter((p) => p.id !== post.id)
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3);
 ---
 
-<BlogPost {...post.data}>
+<BlogPost {...post.data} headings={headings} related={related}>
 	<Content />
 </BlogPost>
