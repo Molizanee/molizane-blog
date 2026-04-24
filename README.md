@@ -1,64 +1,67 @@
-# Astro Starter Kit: Blog
+# Molizane Blog
 
-```sh
-bun create astro@latest -- --template blog
+[![Netlify Status](https://api.netlify.com/api/v1/badges/df65430f-6302-4941-965b-64632df3ff93/deploy-status)](https://app.netlify.com/projects/singular-lily-688cb3/deploys)
+
+Personal blog by David Molizane. Essays, notes, and field reports. Built with Astro 6 and deployed to Netlify as a fully static site.
+
+## Project structure
+
+```
+src/
+  assets/           -- Fonts and images processed at build time
+  components/       -- Reusable Astro components (header, footer, cards, etc.)
+  content/
+    blog/           -- Blog posts as Markdown or MDX files
+  layouts/
+    BlogPost.astro  -- Layout wrapper for individual posts
+  pages/
+    index.astro     -- Home page
+    about.astro     -- About page
+    blog/
+      index.astro       -- Blog listing page
+      [...slug].astro   -- Dynamic route for individual posts
+    rss.xml.js      -- RSS feed generator
+  styles/           -- Global stylesheets
+  consts.ts         -- Site title and description constants
+  content.config.ts -- Content collection schema (Zod validation for frontmatter)
+public/             -- Static assets served as-is (favicons, OG images, etc.)
+astro.config.mjs    -- Astro configuration, font providers, and integrations
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Content collections
 
-Features:
+Posts live in `src/content/blog/` as `.md` or `.mdx` files. The schema in `src/content.config.ts` validates frontmatter fields:
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and Open Graph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+- `title` (required)
+- `description` (required)
+- `pubDate` (required, coerced to Date)
+- `updatedDate` (optional)
+- `heroImage` (optional, processed through Astro image optimization)
 
-## 🚀 Project Structure
+Adding or changing frontmatter fields requires updating the schema, otherwise builds will fail or silently drop data.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Commands
 
-```text
-├── public/
-├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
-```
+All commands run from the project root. The package manager is Bun.
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+| Command              | Description                                |
+| :------------------- | :----------------------------------------- |
+| `bun install`        | Install dependencies                       |
+| `bun dev`            | Start local dev server at `localhost:4321`  |
+| `bun build`          | Build the production site to `./dist/`      |
+| `bun preview`        | Preview the production build locally        |
+| `bun astro check`    | Type-check Astro files and content schemas  |
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+## Integrations
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+- **@astrojs/mdx** -- MDX support for posts
+- **@astrojs/sitemap** -- Generates `sitemap-index.xml` at build
+- **sharp** -- Image optimization service for hero images and assets
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Fonts
 
-## 🧞 Commands
+Atkinson Hyperlegible is self-hosted through Astro's font API and exposed as the CSS variable `--font-atkinson`. Reference the variable in stylesheets rather than the font files directly.
 
-All commands are run from the root of the project, from a terminal:
+## License
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
-# molizane-blog
+This project is based on the [Astro Blog starter](https://github.com/withastro/astro/tree/main/examples/blog), which draws from [Bear Blog](https://github.com/HermanMartinus/bearblog/).
