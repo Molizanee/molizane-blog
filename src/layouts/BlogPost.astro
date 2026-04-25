@@ -38,12 +38,6 @@ const crumbs = breadcrumbs ?? [
 	{ label: category },
 	{ label: title },
 ];
-const initials = author
-	.split(' ')
-	.map((w) => w[0])
-	.join('')
-	.slice(0, 2)
-	.toUpperCase();
 const shareUrl = Astro.site ? new URL(Astro.url.pathname, Astro.site).toString() : Astro.url.href;
 const shareText = encodeURIComponent(title);
 ---
@@ -66,7 +60,7 @@ const shareText = encodeURIComponent(title);
 					<h1>{title}</h1>
 					<p class="post-hero-desc">{description}</p>
 					<div class="byline">
-						<span class="avatar" aria-hidden="true">{initials}</span>
+						<img class="avatar" src="https://github.com/Molizanee.png" alt={author} width="40" height="40" />
 						<div class="byline-meta">
 							<span class="byline-name">{author}</span>
 							<span class="byline-date">
@@ -218,18 +212,10 @@ const shareText = encodeURIComponent(title);
 		gap: 0.875rem;
 	}
 	.avatar {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
 		width: 40px;
 		height: 40px;
 		border-radius: 50%;
-		background: var(--color-text);
-		color: var(--color-surface);
-		font-family: var(--font-mono);
-		font-weight: 600;
-		font-size: var(--text-xs);
-		letter-spacing: 0.04em;
+		object-fit: cover;
 	}
 	.byline-meta {
 		display: flex;
