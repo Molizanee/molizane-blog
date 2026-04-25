@@ -152,26 +152,6 @@ const shareText = encodeURIComponent(title);
 						<slot />
 					</div>
 
-					<section class="comments" aria-labelledby="comments-title">
-						<h2 id="comments-title" class="comments-title">Join the conversation</h2>
-						<form class="comment-form" onsubmit="event.preventDefault();">
-							<div class="comment-field">
-								<label for="comment-name" class="sr-only">Name</label>
-								<input id="comment-name" type="text" placeholder="Your name" required />
-							</div>
-							<div class="comment-field">
-								<label for="comment-body" class="sr-only">Comment</label>
-								<textarea
-									id="comment-body"
-									placeholder="Share your thoughts on this piece…"
-									required></textarea>
-							</div>
-							<div class="comment-actions">
-								<p class="comment-hint">Comments are moderated before appearing.</p>
-								<button type="submit" class="btn btn--accent">Send comment</button>
-							</div>
-						</form>
-					</section>
 				</div>
 			</article>
 
@@ -348,34 +328,6 @@ const shareText = encodeURIComponent(title);
 		margin-bottom: 0.5em;
 	}
 
-	.comments {
-		margin-top: 5rem;
-		padding-top: 2.5rem;
-		border-top: 1px solid var(--color-border);
-	}
-	.comments-title {
-		font-family: var(--font-serif);
-		font-size: var(--text-2xl);
-		margin: 0 0 1.5rem;
-	}
-	.comment-form {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-	.comment-actions {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-		margin-top: 0.25rem;
-	}
-	.comment-hint {
-		margin: 0;
-		font-family: var(--font-mono);
-		font-size: var(--text-xs);
-		color: var(--color-text-muted);
-	}
 
 	.related-section {
 		margin-top: 6rem;
@@ -425,10 +377,6 @@ const shareText = encodeURIComponent(title);
 		}
 		.related-grid {
 			grid-template-columns: 1fr;
-		}
-		.comment-actions {
-			flex-direction: column;
-			align-items: stretch;
 		}
 	}
 </style>
