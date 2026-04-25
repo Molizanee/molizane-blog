@@ -1,6 +1,7 @@
 # Molizane Blog
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/df65430f-6302-4941-965b-64632df3ff93/deploy-status)](https://app.netlify.com/projects/singular-lily-688cb3/deploys)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Molizanee_molizane-blog&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Molizanee_molizane-blog)
 
 Personal blog by David Molizane. Essays, notes, and field reports. Built with Astro 6 and deployed to Netlify as a fully static site.
 

@@ -1,6 +1,7 @@
 ---
 // Obsidian-style force-directed notes graph.
 // Nodes drift with springs on edges + pairwise repulsion + gentle centering.
+// Dynamic nodes spawn and fade away to keep the graph alive.
 ---
 
 <div class="graph" data-notes-graph aria-hidden="true">
@@ -21,43 +22,91 @@
 		vx: number;
 		vy: number;
 		accent?: boolean;
+		ephemeral?: boolean;
+		opacity: number;
+		targetOpacity: number;
 	};
 
-	const NODES: Omit<Node, 'x' | 'y' | 'vx' | 'vy'>[] = [
-		{ id: 0, label: 'craft', r: 11, accent: true },
-		{ id: 1, label: 'design', r: 8 },
-		{ id: 2, label: 'product', r: 8 },
-		{ id: 3, label: 'essays', r: 9 },
-		{ id: 4, label: 'notes', r: 6 },
-		{ id: 5, label: 'systems', r: 7 },
-		{ id: 6, label: 'tools', r: 5 },
-		{ id: 7, label: 'reading', r: 5 },
-		{ id: 8, label: 'taste', r: 6 },
-		{ id: 9, label: 'process', r: 5 },
-		{ id: 10, label: 'ship', r: 6 },
-		{ id: 11, label: 'ideas', r: 5 },
-		{ id: 12, label: 'type', r: 4 },
+	type Edge = [number, number];
+
+	type EdgeEntry = {
+		edge: Edge;
+		el: SVGLineElement;
+		opacity: number;
+		targetOpacity: number;
+	};
+
+	type NodeEntry = {
+		node: Node;
+		circleEl: SVGCircleElement;
+		labelEl: SVGTextElement;
+	};
+
+	// Core permanent nodes — these never get removed.
+	const SEED_NODES: Omit<Node, 'x' | 'y' | 'vx' | 'vy' | 'opacity' | 'targetOpacity'>[] = [
+		{ id: 0, label: 'agents', r: 11, accent: true },
+		{ id: 1, label: 'LLM', r: 9, accent: true },
+		{ id: 2, label: 'backend', r: 8 },
+		{ id: 3, label: 'data', r: 8 },
+		{ id: 4, label: 'RAG', r: 7 },
+		{ id: 5, label: 'API', r: 7 },
+		{ id: 6, label: 'Python', r: 7 },
+		{ id: 7, label: 'Go', r: 6 },
+		{ id: 8, label: 'postgres', r: 6 },
+		{ id: 9, label: 'docker', r: 5 },
+		{ id: 10, label: 'deploy', r: 6 },
+		{ id: 11, label: 'vectors', r: 5 },
+		{ id: 12, label: 'prompts', r: 6 },
+		{ id: 13, label: 'pipelines', r: 6 },
+		{ id: 14, label: 'cloud', r: 6 },
+		{ id: 15, label: 'infra', r: 5 },
+		{ id: 16, label: 'open source', r: 5 },
+		{ id: 17, label: 'eval', r: 5 },
+		{ id: 18, label: 'tools', r: 5 },
 	];
 
-	const EDGES: [number, number][] = [
+	const SEED_EDGES: Edge[] = [
 		[0, 1],
-		[0, 2],
-		[0, 3],
-		[0, 5],
-		[0, 8],
+		[0, 12],
+		[0, 18],
 		[1, 4],
 		[1, 12],
+		[1, 17],
 		[2, 5],
-		[2, 11],
+		[2, 7],
+		[2, 8],
 		[3, 8],
-		[3, 9],
-		[3, 4],
+		[3, 11],
+		[3, 13],
+		[4, 11],
+		[4, 3],
 		[5, 6],
-		[5, 10],
-		[6, 7],
-		[8, 9],
-		[10, 11],
-		[4, 7],
+		[5, 7],
+		[6, 0],
+		[6, 13],
+		[7, 2],
+		[9, 10],
+		[9, 15],
+		[10, 14],
+		[10, 15],
+		[13, 3],
+		[14, 9],
+		[14, 15],
+		[15, 2],
+		[16, 6],
+		[16, 18],
+		[17, 12],
+		[18, 6],
+	];
+
+	// Pool of ephemeral labels that spawn and despawn dynamically.
+	const EPHEMERAL_POOL = [
+		'fine-tune', 'embeddings', 'tokens', 'context', 'inference',
+		'streaming', 'webhook', 'caching', 'queue', 'worker',
+		'schema', 'index', 'migration', 'ETL', 'lakehouse',
+		'gRPC', 'REST', 'auth', 'RBAC', 'gateway',
+		'GPU', 'batch', 'latency', 'k8s', 'CI/CD',
+		'langchain', 'qdrant', 'redis', 'kafka', 'terraform',
 	];
 
 	const W = 400;
@@ -70,86 +119,121 @@
 		const nodeLayer = svg.querySelector('.nodes') as SVGGElement;
 		const labelLayer = svg.querySelector('.labels') as SVGGElement;
 
-		const nodes: Node[] = NODES.map((n, i) => {
-			const angle = (i / NODES.length) * Math.PI * 2;
-			const rad = 110 + Math.random() * 40;
-			return {
-				...n,
-				x: W / 2 + Math.cos(angle) * rad,
-				y: H / 2 + Math.sin(angle) * rad,
-				vx: 0,
-				vy: 0,
-			};
-		});
+		let nextId = 100;
+		const nodeEntries: NodeEntry[] = [];
+		const edgeEntries: EdgeEntry[] = [];
 
-		const edgeEls = EDGES.map(() => {
-			const l = document.createElementNS(SVG_NS, 'line');
-			l.setAttribute('class', 'edge');
-			edgeLayer.appendChild(l);
-			return l;
-		});
+		// --- helpers to create/remove DOM elements ---
 
-		const nodeEls = nodes.map((n) => {
+		function createNodeEntry(n: Node): NodeEntry {
 			const c = document.createElementNS(SVG_NS, 'circle');
-			c.setAttribute('class', n.accent ? 'node node--accent' : 'node');
+			let cls = 'node';
+			if (n.accent) cls += ' node--accent';
+			if (n.ephemeral) cls += ' node--ephemeral';
+			c.setAttribute('class', cls);
 			c.setAttribute('r', String(n.r));
 			c.setAttribute('data-id', String(n.id));
+			if (n.ephemeral) c.style.opacity = '0';
 			nodeLayer.appendChild(c);
-			return c;
-		});
 
-		const labelEls = nodes.map((n) => {
 			const t = document.createElementNS(SVG_NS, 'text');
-			t.setAttribute('class', 'label');
+			t.setAttribute('class', n.ephemeral ? 'label label--ephemeral' : 'label');
 			t.setAttribute('text-anchor', 'middle');
 			t.setAttribute('dy', String(-n.r - 6));
 			t.textContent = n.label;
+			if (n.ephemeral) t.style.opacity = '0';
 			labelLayer.appendChild(t);
-			return t;
-		});
 
-		let hoverId: number | null = null;
-		nodeEls.forEach((el, i) => {
-			el.addEventListener('mouseenter', () => {
-				hoverId = nodes[i].id;
+			const entry: NodeEntry = { node: n, circleEl: c, labelEl: t };
+
+			c.addEventListener('mouseenter', () => {
+				hoverId = n.id;
 				svg.classList.add('has-hover');
 				updateHover();
 			});
-			el.addEventListener('mouseleave', () => {
+			c.addEventListener('mouseleave', () => {
 				hoverId = null;
 				svg.classList.remove('has-hover');
 				updateHover();
 			});
-		});
+
+			return entry;
+		}
+
+		function createEdgeEntry(edge: Edge): EdgeEntry {
+			const l = document.createElementNS(SVG_NS, 'line');
+			l.setAttribute('class', 'edge');
+			l.style.opacity = '0';
+			edgeLayer.appendChild(l);
+			return { edge, el: l, opacity: 0, targetOpacity: 1 };
+		}
+
+		function findNodeEntry(id: number): NodeEntry | undefined {
+			return nodeEntries.find((ne) => ne.node.id === id);
+		}
+
+		// --- seed the initial graph ---
+
+		for (const seed of SEED_NODES) {
+			const angle = (SEED_NODES.indexOf(seed) / SEED_NODES.length) * Math.PI * 2;
+			const rad = 100 + Math.random() * 50;
+			const node: Node = {
+				...seed,
+				x: W / 2 + Math.cos(angle) * rad,
+				y: H / 2 + Math.sin(angle) * rad,
+				vx: 0,
+				vy: 0,
+				opacity: 1,
+				targetOpacity: 1,
+			};
+			const entry = createNodeEntry(node);
+			nodeEntries.push(entry);
+		}
+
+		for (const edge of SEED_EDGES) {
+			const entry = createEdgeEntry(edge);
+			entry.opacity = 1;
+			entry.targetOpacity = 1;
+			entry.el.style.opacity = '';
+			edgeEntries.push(entry);
+		}
+
+		// --- hover logic ---
+
+		let hoverId: number | null = null;
 
 		function updateHover() {
 			const connected = new Set<number>();
 			if (hoverId != null) {
 				connected.add(hoverId);
-				EDGES.forEach(([a, b]) => {
+				for (const ee of edgeEntries) {
+					const [a, b] = ee.edge;
 					if (a === hoverId) connected.add(b);
 					if (b === hoverId) connected.add(a);
-				});
+				}
 			}
-			nodeEls.forEach((el, i) => {
-				el.classList.toggle('is-active', connected.has(nodes[i].id));
-			});
-			edgeEls.forEach((el, i) => {
-				const [a, b] = EDGES[i];
-				el.classList.toggle('is-active', connected.has(a) && connected.has(b));
-			});
-			labelEls.forEach((el, i) => {
-				el.classList.toggle('is-active', connected.has(nodes[i].id));
-			});
+			for (const ne of nodeEntries) {
+				ne.circleEl.classList.toggle('is-active', connected.has(ne.node.id));
+				ne.labelEl.classList.toggle('is-active', connected.has(ne.node.id));
+			}
+			for (const ee of edgeEntries) {
+				const [a, b] = ee.edge;
+				ee.el.classList.toggle('is-active', connected.has(a) && connected.has(b));
+			}
 		}
 
+		// --- physics ---
+
 		const REPULSION = 900;
-		const SPRING = 0.018;
-		const REST_LEN = 78;
-		const CENTER_PULL = 0.0035;
+		const SPRING = 0.016;
+		const REST_LEN = 72;
+		const CENTER_PULL = 0.004;
 		const DAMP = 0.86;
 
 		function tick() {
+			const nodes = nodeEntries.map((ne) => ne.node);
+
+			// Repulsion
 			for (let i = 0; i < nodes.length; i++) {
 				for (let j = i + 1; j < nodes.length; j++) {
 					const a = nodes[i];
@@ -167,9 +251,13 @@
 					b.vy += fy;
 				}
 			}
-			for (const [i, j] of EDGES) {
-				const a = nodes[i];
-				const b = nodes[j];
+
+			// Springs
+			for (const ee of edgeEntries) {
+				const [ai, bi] = ee.edge;
+				const a = findNodeEntry(ai)?.node;
+				const b = findNodeEntry(bi)?.node;
+				if (!a || !b) continue;
 				const dx = b.x - a.x;
 				const dy = b.y - a.y;
 				const d = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -181,6 +269,8 @@
 				b.vx -= fx;
 				b.vy -= fy;
 			}
+
+			// Center pull + damping + integration
 			for (const n of nodes) {
 				n.vx += (W / 2 - n.x) * CENTER_PULL;
 				n.vy += (H / 2 - n.y) * CENTER_PULL;
@@ -189,23 +279,74 @@
 				n.x += n.vx;
 				n.y += n.vy;
 			}
+
+			// Animate opacity
+			const FADE_SPEED = 0.04;
+			for (const ne of nodeEntries) {
+				const n = ne.node;
+				if (n.opacity < n.targetOpacity) {
+					n.opacity = Math.min(n.opacity + FADE_SPEED, n.targetOpacity);
+				} else if (n.opacity > n.targetOpacity) {
+					n.opacity = Math.max(n.opacity - FADE_SPEED, n.targetOpacity);
+				}
+			}
+			for (const ee of edgeEntries) {
+				if (ee.opacity < ee.targetOpacity) {
+					ee.opacity = Math.min(ee.opacity + FADE_SPEED, ee.targetOpacity);
+				} else if (ee.opacity > ee.targetOpacity) {
+					ee.opacity = Math.max(ee.opacity - FADE_SPEED, ee.targetOpacity);
+				}
+			}
+
+			// Garbage-collect fully faded-out ephemeral nodes
+			for (let i = nodeEntries.length - 1; i >= 0; i--) {
+				const ne = nodeEntries[i];
+				if (ne.node.ephemeral && ne.node.targetOpacity === 0 && ne.node.opacity <= 0) {
+					// Remove edges connected to this node
+					for (let j = edgeEntries.length - 1; j >= 0; j--) {
+						const [a, b] = edgeEntries[j].edge;
+						if (a === ne.node.id || b === ne.node.id) {
+							edgeEntries[j].el.remove();
+							edgeEntries.splice(j, 1);
+						}
+					}
+					ne.circleEl.remove();
+					ne.labelEl.remove();
+					nodeEntries.splice(i, 1);
+				}
+			}
 		}
 
 		function render() {
-			for (let i = 0; i < edgeEls.length; i++) {
-				const [a, b] = EDGES[i];
-				edgeEls[i].setAttribute('x1', String(nodes[a].x));
-				edgeEls[i].setAttribute('y1', String(nodes[a].y));
-				edgeEls[i].setAttribute('x2', String(nodes[b].x));
-				edgeEls[i].setAttribute('y2', String(nodes[b].y));
+			for (const ee of edgeEntries) {
+				const [ai, bi] = ee.edge;
+				const a = findNodeEntry(ai)?.node;
+				const b = findNodeEntry(bi)?.node;
+				if (!a || !b) continue;
+				ee.el.setAttribute('x1', String(a.x));
+				ee.el.setAttribute('y1', String(a.y));
+				ee.el.setAttribute('x2', String(b.x));
+				ee.el.setAttribute('y2', String(b.y));
+				// Only set inline opacity for edges connected to ephemeral nodes
+				if (a.ephemeral || b.ephemeral) {
+					ee.el.style.opacity = String(ee.opacity * 0.55);
+				}
 			}
-			for (let i = 0; i < nodeEls.length; i++) {
-				nodeEls[i].setAttribute('cx', String(nodes[i].x));
-				nodeEls[i].setAttribute('cy', String(nodes[i].y));
-				labelEls[i].setAttribute('x', String(nodes[i].x));
-				labelEls[i].setAttribute('y', String(nodes[i].y));
+			for (const ne of nodeEntries) {
+				const n = ne.node;
+				ne.circleEl.setAttribute('cx', String(n.x));
+				ne.circleEl.setAttribute('cy', String(n.y));
+				ne.labelEl.setAttribute('x', String(n.x));
+				ne.labelEl.setAttribute('y', String(n.y));
+				// Only set inline opacity for ephemeral nodes (permanent ones use CSS)
+				if (n.ephemeral) {
+					ne.circleEl.style.opacity = String(n.opacity);
+					ne.labelEl.style.opacity = String(n.opacity * 0.7);
+				}
 			}
 		}
+
+		// --- animation loop ---
 
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		let raf = 0;
@@ -222,14 +363,94 @@
 		}
 		loop();
 
-		// Occasional gentle nudges so the graph feels alive without being chaotic.
+		// --- dynamic spawn / despawn ---
+
 		if (!reduced) {
+			// Gentle nudges
 			setInterval(() => {
-				const n = nodes[Math.floor(Math.random() * nodes.length)];
-				n.vx += (Math.random() - 0.5) * 3;
-				n.vy += (Math.random() - 0.5) * 3;
+				const ne = nodeEntries[Math.floor(Math.random() * nodeEntries.length)];
+				ne.node.vx += (Math.random() - 0.5) * 3;
+				ne.node.vy += (Math.random() - 0.5) * 3;
 			}, 3500);
+
+			const usedLabels = new Set<string>();
+			const MAX_EPHEMERAL = 5;
+
+			function countEphemeral(): number {
+				return nodeEntries.filter((ne) => ne.node.ephemeral).length;
+			}
+
+			function spawnNode() {
+				if (countEphemeral() >= MAX_EPHEMERAL) return;
+
+				// Pick an unused label
+				const available = EPHEMERAL_POOL.filter((l) => !usedLabels.has(l));
+				if (available.length === 0) return;
+				const label = available[Math.floor(Math.random() * available.length)];
+				usedLabels.add(label);
+
+				const id = nextId++;
+				const r = 3 + Math.floor(Math.random() * 4);
+
+				// Spawn near a random existing node
+				const anchor = nodeEntries[Math.floor(Math.random() * nodeEntries.length)];
+				const angle = Math.random() * Math.PI * 2;
+				const dist = 40 + Math.random() * 30;
+
+				const node: Node = {
+					id,
+					label,
+					r,
+					x: anchor.node.x + Math.cos(angle) * dist,
+					y: anchor.node.y + Math.sin(angle) * dist,
+					vx: (Math.random() - 0.5) * 2,
+					vy: (Math.random() - 0.5) * 2,
+					ephemeral: true,
+					opacity: 0,
+					targetOpacity: 1,
+				};
+
+				const entry = createNodeEntry(node);
+				nodeEntries.push(entry);
+
+				// Connect to 1-2 existing permanent nodes
+				const edgeCount = 1 + Math.floor(Math.random() * 2);
+				const permanentNodes = nodeEntries.filter((ne) => !ne.node.ephemeral);
+				const shuffled = permanentNodes.sort(() => Math.random() - 0.5);
+				for (let i = 0; i < Math.min(edgeCount, shuffled.length); i++) {
+					const ee = createEdgeEntry([shuffled[i].node.id, id]);
+					edgeEntries.push(ee);
+				}
+
+				// Schedule removal after 5-9 seconds
+				const lifetime = 5000 + Math.random() * 4000;
+				setTimeout(() => {
+					node.targetOpacity = 0;
+					// Fade edges too
+					for (const ee of edgeEntries) {
+						if (ee.edge[0] === id || ee.edge[1] === id) {
+							ee.targetOpacity = 0;
+						}
+					}
+					// Release label back to pool after fade completes
+					setTimeout(() => usedLabels.delete(label), 1500);
+				}, lifetime);
+			}
+
+			// Spawn a new node every 2-4 seconds
+			function scheduleSpawn() {
+				const delay = 2000 + Math.random() * 2000;
+				setTimeout(() => {
+					spawnNode();
+					scheduleSpawn();
+				}, delay);
+			}
+
+			// Kick off the first spawn after a short delay
+			setTimeout(scheduleSpawn, 1500);
 		}
+
+		// --- visibility observer ---
 
 		const io = new IntersectionObserver((entries) => {
 			for (const e of entries) {
@@ -303,5 +524,14 @@
 	.graph :global(.label.is-active) {
 		opacity: 1;
 		fill: var(--color-text);
+	}
+	.graph :global(.node--ephemeral) {
+		fill: var(--color-accent);
+		opacity: 0.7;
+		stroke-width: 2;
+	}
+	.graph :global(.label--ephemeral) {
+		fill: var(--color-accent);
+		font-size: 8px;
 	}
 </style>
